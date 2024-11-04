@@ -8,26 +8,40 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-void apply_glcm_0(std::string *file) {
+void apply_glcm_0(std::string *file, bool write_output = false) {
   png_image image_png;
   std::cout << file->c_str() << std::endl;
 
+  // open the image png and put it into an array
   open_image_value_32b_array(file->c_str(), &image_png);
-  int *matrix =
-      (int *)malloc(sizeof(int) * (image_png.width * image_png.height));
+  std::vector<int> matrix(image_png.height * image_png.width, 0);
 
   // get the maximum valur of the image
-  int max = 0; 
+  int max = 0;
   for (int i = 0; i < (image_png.height * image_png.width); ++i) {
     matrix[i] = image_png.image[i];
     if (matrix[i] > max) {
       max = matrix[i];
     }
   }
-  max += 1;
-  int *glcm = (int *)malloc(sizeof(int) * (max * max));
 
-  glcm_0_nop(matrix, glcm, image_png.height, image_png.width, max);
+  max += 1;
+  std::vector<int> glcm(max * max, 0);
+  glcm_0_nop(matrix.data(), glcm.data(), image_png.height, image_png.width,
+             max);
+
+  if (write_output) {
+    std::string r;
+    {
+      fs::path file_path(file->c_str());
+      fs::path new_file_name =
+          "result/" + file_path.stem().string() + "_result.txt";
+      fs::path new_file_path = file_path.parent_path() / new_file_name;
+      r = new_file_path.string();
+    }
+
+    write_image_matrix(r, glcm.data(), max, max);
+  }
 }
 
 int main() {
@@ -36,13 +50,8 @@ int main() {
   std::unordered_map<fs::path, fs::path, PathHash> file_map =
       get_images(folder);
   for (const auto &file : file_map) {
-
-    // std::cout << image_png.height << std::endl;
-    // std::cout << image_png.width << std::endl;
-    // for (int i = 0; i < image_png.height * image_png.width; i++) {
-    //  std::cout << (int)image_png.image[i] << " ";
-    //  std::cout << std::endl;
-    //}
+    std::string f = file.first.string();
+    apply_glcm_0(&f, true);
   }
 
   return 0;

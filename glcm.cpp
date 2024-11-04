@@ -1,6 +1,5 @@
 #include "glcm.h"
 
-
 /* Calculate the glcm for the image array
  * #TODO the function is not optimized
  * Complexity: O(n^4)

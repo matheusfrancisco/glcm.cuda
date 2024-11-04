@@ -32,7 +32,8 @@ get_images(const std::string folder) {
  * @param number_of_rows
  * @param number_of_columns
  */
-void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
+void write_image_matrix(std::string path,
+                        int *matrix, const int number_of_rows,
                         const int number_of_columns) {
   FILE *file = NULL;
   int *ic = matrix;
