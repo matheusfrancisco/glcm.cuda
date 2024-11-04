@@ -27,8 +27,11 @@ void apply_glcm_0(std::string *file, bool write_output = false) {
 
   max += 1;
   std::vector<int> glcm(max * max, 0);
-  glcm_0_nop(matrix.data(), glcm.data(), image_png.height, image_png.width,
-             max);
+  // glcm_0_nop(matrix.data(), glcm.data(), image_png.height, image_png.width,
+  //           max);
+
+  glcm_optimized(matrix.data(), glcm.data(), image_png.height, image_png.width,
+                 max);
 
   if (write_output) {
     std::string r;
