@@ -1,6 +1,7 @@
 #include "file.h"
 #include "glcm.h"
 #include "image.h"
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <unordered_map>
@@ -9,13 +10,15 @@ using namespace std;
 namespace fs = std::filesystem;
 
 void apply_glcm_0(std::string *file, bool write_output = false) {
+
   png_image image_png;
   std::cout << file->c_str() << std::endl;
 
   // open the image png and put it into an array
   open_image_value_32b_array(file->c_str(), &image_png);
-  std::vector<int> matrix(image_png.height * image_png.width, 0);
 
+  size_t m_size = (image_png.width * image_png.height) * sizeof(int);
+  int *matrix = (int *)malloc(m_size);
   // get the maximum valur of the image
   int max = 0;
   for (int i = 0; i < (image_png.height * image_png.width); ++i) {
@@ -25,13 +28,19 @@ void apply_glcm_0(std::string *file, bool write_output = false) {
     }
   }
 
-  max += 1;
-  std::vector<int> glcm(max * max, 0);
-  // glcm_0_nop(matrix.data(), glcm.data(), image_png.height, image_png.width,
-  //           max);
+  max += 2;
 
-  glcm_optimized(matrix.data(), glcm.data(), image_png.height, image_png.width,
-                 max);
+  int n_row = image_png.height;
+  int n_col = image_png.width;
+  std::cout << "max: " << max << std::endl;
+  std::cout << "n_row: " << n_row << std::endl;
+  std::cout << "n_col: " << n_col << std::endl;
+
+  int glcm_size = (max * max) * sizeof(int);
+  int *h_glcm_cpu = (int *)malloc(glcm_size);
+
+  memset(h_glcm_cpu, 0, glcm_size);
+  glcm_0(matrix, h_glcm_cpu, n_col, n_row, max);
 
   if (write_output) {
     std::string r;
@@ -43,8 +52,10 @@ void apply_glcm_0(std::string *file, bool write_output = false) {
       r = new_file_path.string();
     }
 
-    write_image_matrix(r, glcm.data(), max, max);
+    write_image_matrix(r, h_glcm_cpu, max, max);
   }
+  free(matrix);
+  free(h_glcm_cpu);
 }
 
 int main() {

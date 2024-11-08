@@ -1,3 +1,9 @@
 [submodule "lodepng"]
 	path = lodepng
 	url = git@github.com:lvandeve/lodepng.git
+[submodule "dcm/dcmtk"]
+	path = dcm/dcmtk
+	url = git@github.com:DCMTK/dcmtk.git
+[submodule "dcm/gdcm"]
+	path = dcm/gdcm
+	url = git://git.code.sf.net/p/gdcm/gdcm

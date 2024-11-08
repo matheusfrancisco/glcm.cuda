@@ -11,10 +11,16 @@ get_images(const std::string folder) {
 
   std::unordered_map<fs::path, fs::path, PathHash> file_map;
   try {
-    for (const auto &entry : fs::directory_iterator(folder)) {
+    for (const auto &entry : fs::recursive_directory_iterator(folder)) {
       if (fs::is_regular_file(entry.path())) {
         fs::path filepath = entry.path();
-        file_map[filepath] = filepath;
+        std::string extension = filepath.extension().string();
+        if (extension == ".jpg" || extension == ".jpeg" ||
+            extension == ".png" || extension == ".bmp" || extension == ".gif" ||
+            extension == ".dcm") {
+          std::cout << filepath << std::endl;
+          file_map[filepath] = filepath;
+        }
       }
     }
 
@@ -32,8 +38,7 @@ get_images(const std::string folder) {
  * @param number_of_rows
  * @param number_of_columns
  */
-void write_image_matrix(std::string path,
-                        int *matrix, const int number_of_rows,
+void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
                         const int number_of_columns) {
   FILE *file = NULL;
   int *ic = matrix;
@@ -47,7 +52,7 @@ void write_image_matrix(std::string path,
       fprintf(file, "%d  ", ic[j]);
     }
     fprintf(file, "\n\n");
-    ic += number_of_rows;
+    ic += number_of_columns;
   }
   fclose(file);
   return;
