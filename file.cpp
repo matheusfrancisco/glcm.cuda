@@ -15,9 +15,7 @@ get_images(const std::string folder) {
       if (fs::is_regular_file(entry.path())) {
         fs::path filepath = entry.path();
         std::string extension = filepath.extension().string();
-        if (extension == ".jpg" || extension == ".jpeg" ||
-            extension == ".png" || extension == ".bmp" || extension == ".gif" ||
-            extension == ".dcm") {
+        if (extension == ".png" || extension == ".dcm") {
           std::cout << filepath << std::endl;
           file_map[filepath] = filepath;
         }
