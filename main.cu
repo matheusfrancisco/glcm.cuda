@@ -29,59 +29,42 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
   int dy_array[] = {0, -1, -1, -1, 0, 1, 1, 1};
   int num_directions = 8;
 
-  int *d_matrix, *d_glcm[num_directions];
-
   int glcm_size = (max * max) * sizeof(int);
 
-  if (matrix == NULL) {
-    std::cerr << "Error allocating memory" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  // Compare CPU and CUDA GLCMs
-  for (int i = 0; i < num_directions; i++) {
-    std::cout << "CudaMalloc: " << i << std::endl;
-    cudaMalloc(&d_glcm[i], glcm_size);
-    checkCudaError("cudaMalloc d_glcm");
-    cudaMemset(d_glcm[i], 0, glcm_size);
-    checkCudaError("cudaMemset d_glcm");
-  }
 
-  // memset(h_glcm_cuda, 0, sizeof(glcm_size));
-
-  // Allocate device memory
-  cudaMalloc((void **)&d_matrix, sizeof(int) * n_row * n_col);
-  checkCudaError("cudaMalloc d_matrix");
-
-  // Copy matrix to device
-  cudaMemcpy(d_matrix, matrix, sizeof(int) * n_row * n_col,
-             cudaMemcpyHostToDevice);
-  checkCudaError("cudaMemcpy to d_matrix");
-
+  int *d_matrix, *d_glcm;
   // Define CUDA kernel launch parameters
   int threads_per_block = 256;
   int total_pairs = n_row * (n_col - 1);
   int number_of_blocks =
       (total_pairs + threads_per_block - 1) / threads_per_block;
 
+  cudaMalloc((void **)&d_matrix, sizeof(int) * n_row * n_col);
+  // Copy matrix to device
+  cudaMemcpy(d_matrix, matrix, sizeof(int) * n_row * n_col,
+             cudaMemcpyHostToDevice);
   for (int dir = 0; dir < num_directions; dir++) {
     int dx = dx_array[dir];
     int dy = dy_array[dir];
 
+    std::cout << "CudaMalloc: " << dir << std::endl;
+    cudaMalloc(&d_glcm, glcm_size);
+    checkCudaError("cudaMalloc d_glcm");
+    cudaMemset(d_glcm, 0, glcm_size);
+
+    checkCudaError("cudaMemset d_glcm");
     glcm_cuda_direction<<<number_of_blocks, threads_per_block>>>(
-        d_matrix, d_glcm[dir], n_col, n_row, max, dx, dy);
+        d_matrix, d_glcm, n_col, n_row, max, dx, dy);
     checkCudaError("glcm_cuda_optimized kernel launch");
-  }
 
-  // Synchronize to ensure kernel completion
-  cudaDeviceSynchronize();
-  checkCudaError("cudaDeviceSynchronize");
+    // Synchronize to ensure kernel completion
+    cudaDeviceSynchronize();
+    checkCudaError("cudaDeviceSynchronize");
 
-  // Copy GLCM back to host
-  for (int i = 0; i < num_directions; i++) {
-    //  int *h_glcm_cuda = (int *)malloc(glcm_size);
+    // Copy GLCM back to host
     int *h_glcm_cuda = (int *)malloc((max * max) * sizeof(int));
 
-    cudaMemcpy(h_glcm_cuda, d_glcm[i], sizeof(int) * (max * max),
+    cudaMemcpy(h_glcm_cuda, d_glcm, sizeof(int) * (max * max),
                cudaMemcpyDeviceToHost);
 
     checkCudaError("cudaMemcpy to h_glcm_cuda");
@@ -96,17 +79,17 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
         std::string new_file_name =
             "/home/chico/m/chico/glcm.cuda/data/result/" + file_path + "_" +
-            std::to_string(i) + "_gpu_result.txt";
+            std::to_string(dir) + "_gpu_result.txt";
         std::cout << "Writing output: " << new_file_name << std::endl;
         r = new_file_name.c_str();
       }
       write_image_matrix(r, h_glcm_cuda, max, max);
     }
 
-    // Cleanup
-    cudaFree(d_glcm[i]);
+    cudaFree(d_glcm);
     free(h_glcm_cuda);
   }
+
   cudaFree(d_matrix);
 }
 
