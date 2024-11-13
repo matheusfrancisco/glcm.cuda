@@ -8,6 +8,7 @@ CSV file to be input in a machine learning model/cnn/transformer.
 We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
 Running for a small set of image we already have the following results:
 
+Result for 275 Dicom images
 ![Time GPU vs CPU](./total_time_comparison.png)
 
 
