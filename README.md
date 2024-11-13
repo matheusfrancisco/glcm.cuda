@@ -7,7 +7,9 @@ Working in progress
 ## Run e.g
 GPU command
 ```bash
-nvcc -arch=sm_70 main.cu lodepng/lodepng.cpp file.cpp image.cpp glcm.cpp -o out --run
+mkdir build/
+cd build/
+cmake .. & make & make run
 ```
 
 CPU
