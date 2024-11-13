@@ -4,6 +4,23 @@ This is a Proof of concept of a GLCM implementation using CUDA.
 The idea is to use the GPU to calculate the GLCM matrix and then use the CPU to calculate the features and export it to a
 CSV file to be input in a machine learning model/cnn/transformer.
 
+### TODO
+- [x] glcm in cpu for 8 directions
+- [x] glcm in gpu for 8 directions
+- [x] glcm using openmp for 8 directions
+- [ ] improve cude memory allocation
+- [ ] improve cuda memory copy
+- [ ] improve cuda memory free
+- [ ] try to use streams to improve performance
+- [ ] use shared memory to improve performance
+- [ ] try remove data dependency
+
+- [ ] implement normalization in gpu and cpu 
+- [ ] implement features in gpu and cpu
+- [ ] implement average in gpu and cpu
+- [ ] implement variance in gpu and cpu
+- [ ] implement contrast in gpu and cpu
+
 ## Evaluation
 We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
 Running for a small set of image we already have the following results:
