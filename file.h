@@ -35,4 +35,6 @@ void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
 std::unordered_map<fs::path, fs::path, PathHash>
 get_images(const std::string folder);
 
+void write_map_to_csv(const std::unordered_map<std::string, double> &time_map,
+                      const std::string &filename);
 #endif // FILE_H

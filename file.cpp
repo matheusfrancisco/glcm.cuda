@@ -1,4 +1,5 @@
 #include "file.h"
+#include <fstream>
 
 /**
  * @brief Get all the images in a folder
@@ -54,4 +55,24 @@ void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
   }
   fclose(file);
   return;
+}
+
+void write_map_to_csv(const std::unordered_map<std::string, double> &time_map,
+                      const std::string &filename) {
+  std::ofstream csv_file(filename);
+  if (!csv_file.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return;
+  }
+
+  // Write the header
+  csv_file << "string,time\n";
+
+  // Write the map contents
+  for (const auto &pair : time_map) {
+    csv_file << pair.first << "," << std::fixed << std::setprecision(6)
+             << pair.second << "\n";
+  }
+
+  csv_file.close();
 }
