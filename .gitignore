@@ -1,3 +1,8 @@
 build/*
 venv/
 data/csv_result/*
+data/result_cpu/*
+data/result/*
+data/csv_result_cpu/*
+out/
+images/*

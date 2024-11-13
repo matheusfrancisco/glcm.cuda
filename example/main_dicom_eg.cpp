@@ -1,7 +1,7 @@
 // main.cpp
 
-#include "DICOMReader.h"
-#include "file.h"
+#include "../DICOMReader.h"
+#include "../file.h"
 #include <iostream>
 #include <vector>
 

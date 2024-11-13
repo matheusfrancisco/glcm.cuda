@@ -1,4 +1,5 @@
 import csv
+import os
 import matplotlib.pyplot as plt
 
 def read_csv(file_path):
@@ -11,7 +12,7 @@ def read_csv(file_path):
             times.append(float(row['time']))
     return functions, times
 
-def plot_execution_times(functions, times):
+def plot_execution_times(functions, times, name):
     plt.figure(figsize=(10, 6))
     plt.bar(functions, times, color='skyblue')
     plt.xlabel('Function')
@@ -19,10 +20,19 @@ def plot_execution_times(functions, times):
     plt.title('Execution Time of Functions')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig("plot.png")
+    plt.savefig(f"images/{name}.png")
+
+def get_all_files_in_folder(folder_path):
+    files_res = []
+    for root, _, files in os.walk(folder_path):
+        for f in files:
+            o = {"filename": f, "path": os.path.join(root, f), "name": f.split(".")[0]}
+            files_res.append(o)
+    return files_res
 
 if __name__ == "__main__":
-    # Replace 'timing_results.csv' with the path to your CSV file
-    csv_file_path = 'data/csv_result/dcm_result0.csv'
-    functions, times = read_csv(csv_file_path)
-    plot_execution_times(functions, times)
+    files = get_all_files_in_folder('data/csv_result')
+    for f in files:
+        print(f" ploting {f.get("path")}")
+        image, times = read_csv(f.get("path"))
+        plot_execution_times(image, times, f.get("name"))

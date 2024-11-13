@@ -76,3 +76,25 @@ void write_map_to_csv(const std::unordered_map<std::string, double> &time_map,
 
   csv_file.close();
 }
+
+void write_map_to_csv_cpu(
+    const std::unordered_map<std::string, double> &time_map,
+    const std::string &filename) {
+
+  for (const auto &pair : time_map) {
+    std::ofstream csv_file(filename + pair.first + ".csv");
+
+    if (!csv_file.is_open()) {
+      std::cerr << "Error opening file: " << filename << std::endl;
+      return;
+    }
+
+    // Write the header
+    csv_file << "string,time\n";
+    // Write the map contents
+    csv_file << pair.first << "," << std::fixed << std::setprecision(6)
+             << pair.second << "\n";
+
+    csv_file.close();
+  }
+}

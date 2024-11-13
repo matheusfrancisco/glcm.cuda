@@ -24,9 +24,6 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
                   std::string result_csv, std::string filename = "default",
                   bool write_output = false) {
 
-  std::unordered_map<std::string, double> time_map;
-  auto start_time = std::chrono::high_resolution_clock::now();
-
   int dx_array[] = {1, 1, 0, -1, -1, -1, 0, -1};
   int dy_array[] = {0, -1, -1, -1, 0, 1, 1, 1};
   int num_directions = 8;
@@ -44,6 +41,8 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
   // Copy matrix to device
   cudaMemcpy(d_matrix, matrix, sizeof(int) * n_row * n_col,
              cudaMemcpyHostToDevice);
+
+  std::unordered_map<std::string, double> time_map;
   for (int dir = 0; dir < num_directions; dir++) {
     int dx = dx_array[dir];
     int dy = dy_array[dir];
@@ -53,6 +52,7 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
     checkCudaError("cudaMalloc d_glcm");
     cudaMemset(d_glcm, 0, glcm_size);
 
+    auto start_time = std::chrono::high_resolution_clock::now();
     checkCudaError("cudaMemset d_glcm");
     glcm_cuda_direction<<<number_of_blocks, threads_per_block>>>(
         d_matrix, d_glcm, n_col, n_row, max, dx, dy);
@@ -140,8 +140,6 @@ int main() {
     std::cout << "done" << std::endl;
   }
 
-  DICOMImage image;
-
   std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
 
   std::unordered_map<fs::path, fs::path, PathHash> file_map2 =
@@ -149,6 +147,7 @@ int main() {
 
   int count = 0;
   for (const auto &file : file_map2) {
+    DICOMImage image;
 
     std::cout << "Reading DICOM file: " << file.first.string() << std::endl;
     if (readDICOMImage(file.first.string(), image)) {
@@ -170,7 +169,8 @@ int main() {
         }
       }
       if (max < 10000) {
-        std::string r = "../data/csv_result/dcm_result" + std::to_string(count) + ".csv";
+        std::string r =
+            "../data/csv_result/dcm_result" + std::to_string(count) + ".csv";
         apply_glcm_1(matrix, max, image.rows, image.cols, r,
                      file.first.string(), true);
       }

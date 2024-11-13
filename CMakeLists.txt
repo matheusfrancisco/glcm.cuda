@@ -57,3 +57,32 @@ add_custom_target(run
     DEPENDS glcm_cuda
     WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
 )
+
+# Target 2: CPU-only executable
+add_executable(glcm_cpu
+    main_cpu.cpp
+    file.cpp
+    image.cpp
+    glcm.cpp
+    DICOMReader.cpp
+    lodepng/lodepng.cpp
+)
+
+# Link DCMTK libraries to the CPU executable
+target_link_libraries(glcm_cpu ${DCMTK_LIBRARIES})
+
+# Set target properties for CPU
+set_target_properties(glcm_cpu PROPERTIES
+    CXX_STANDARD 17
+)
+
+# Require C++17 features for both targets
+target_compile_features(glcm_cuda PUBLIC cxx_std_17)
+target_compile_features(glcm_cpu PUBLIC cxx_std_17)
+
+# Custom run target for CPU
+add_custom_target(run_cpu
+    COMMAND glcm_cpu
+    DEPENDS glcm_cpu
+    WORKING_DIRECTORY ${CMAKE_PROJECT_DIR}
+)

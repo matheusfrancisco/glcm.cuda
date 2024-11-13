@@ -37,4 +37,9 @@ get_images(const std::string folder);
 
 void write_map_to_csv(const std::unordered_map<std::string, double> &time_map,
                       const std::string &filename);
+
+void write_map_to_csv_cpu(
+    const std::unordered_map<std::string, double> &time_map,
+    const std::string &filename);
 #endif // FILE_H
+//
