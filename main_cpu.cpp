@@ -16,7 +16,9 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
   auto directions = get_directions();
   std::unordered_map<std::string, double> time_map;
+  std::unordered_map<std::string, double> total_cpu;
 
+  auto start_time_global = std::chrono::high_resolution_clock::now();
   for (const auto &dir : directions) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -60,8 +62,17 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
     free(r_glcm);
   }
   free(matrix);
+  auto end_time_global = std::chrono::high_resolution_clock::now();
+  total_cpu["total_cpu"] =
+      std::chrono::duration<double>(end_time_global - start_time_global)
+          .count();
 
+  std::cout << "Total elapsed time: "
+            << std::chrono::duration<double>(end_time_global - start_time_global)
+                   .count()
+            << " seconds\n";
   write_map_to_csv_cpu(time_map, result_csv);
+  write_map_to_csv(total_cpu, "../total_cpu.csv");
 }
 
 int main() {

@@ -43,11 +43,16 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
              cudaMemcpyHostToDevice);
 
   std::unordered_map<std::string, double> time_map;
+  std::unordered_map<std::string, double> total_gpu;
+  auto start_time_global = std::chrono::high_resolution_clock::now();
+
+  std::vector<int *> h_glcm_cuda_vec(num_directions, nullptr);
+
   for (int dir = 0; dir < num_directions; dir++) {
     int dx = dx_array[dir];
     int dy = dy_array[dir];
 
-    std::cout << "CudaMalloc: " << dir << std::endl;
+    // std::cout << "CudaMalloc: " << dir << std::endl;
     cudaMalloc(&d_glcm, glcm_size);
     checkCudaError("cudaMalloc d_glcm");
     cudaMemset(d_glcm, 0, glcm_size);
@@ -61,20 +66,31 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
     // Synchronize to ensure kernel completion
     cudaDeviceSynchronize();
     checkCudaError("cudaDeviceSynchronize");
-
     auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end_time - start_time;
+
+    time_map[filename + "_" + std::to_string(dir)] = elapsed.count();
     // Copy GLCM back to host
     int *h_glcm_cuda = (int *)malloc((max * max) * sizeof(int));
 
     cudaMemcpy(h_glcm_cuda, d_glcm, sizeof(int) * (max * max),
                cudaMemcpyDeviceToHost);
+    h_glcm_cuda_vec[dir] = h_glcm_cuda;
 
     checkCudaError("cudaMemcpy to h_glcm_cuda");
-    std::chrono::duration<double> elapsed = end_time - start_time;
 
     std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
 
-    if (write_output) {
+    cudaFree(d_glcm);
+  }
+
+  auto end_time_global = std::chrono::high_resolution_clock::now();
+  total_gpu["total_gpu_dcm"] =
+      std::chrono::duration<double>(end_time_global - start_time_global)
+          .count();
+
+  if (write_output) {
+    for (int dir = 0; dir < num_directions; dir++) {
       std::string r;
       {
         std::cout << "Writing output: " << filename.c_str() << std::endl;
@@ -89,21 +105,20 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
         std::string part2 = path.substr(last_slash + 1, path.find_last_of('.') -
                                                             last_slash - 1);
 
-        time_map[part1 + "-" + part2 + "_" + std::to_string(dir)] =
-            elapsed.count();
         std::string new_file_name =
             "/home/chico/m/chico/glcm.cuda/data/result/" + part1 + "-" + part2 +
             "_" + std::to_string(dir) + "_gpu_result.txt";
         std::cout << "Writing output: " << new_file_name << std::endl;
         r = new_file_name.c_str();
       }
-      write_image_matrix(r, h_glcm_cuda, max, max);
-    }
 
-    cudaFree(d_glcm);
-    free(h_glcm_cuda);
+      write_image_matrix(r, h_glcm_cuda_vec[dir], max, max);
+      free(h_glcm_cuda_vec[dir]);
+    }
   }
+
   write_map_to_csv(time_map, result_csv);
+  write_map_to_csv(total_gpu, "../total_gpu.csv");
 
   cudaFree(d_matrix);
 }
@@ -146,10 +161,11 @@ int main() {
       get_images(folder_dcm);
 
   int count = 0;
+
   for (const auto &file : file_map2) {
     DICOMImage image;
 
-    std::cout << "Reading DICOM file: " << file.first.string() << std::endl;
+    //std::cout << "Reading DICOM file: " << file.first.string() << std::endl;
     if (readDICOMImage(file.first.string(), image)) {
       std::cout << "Image Dimensions: " << image.rows << " x " << image.cols
                 << std::endl;
