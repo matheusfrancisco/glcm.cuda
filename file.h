@@ -23,9 +23,12 @@ struct PathHash {
  * @param number_of_rows
  * @param number_of_columns
  */
-void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
-                        const int number_of_columns);
+void write_image_matrix(std::string path, float *matrix,
+                        const int number_of_rows, const int number_of_columns);
 
+void write_image_matrix_glcm(std::string path, int *matrix,
+                             const int number_of_rows,
+                             const int number_of_columns);
 /**
  * @brief Get all the images in a folder
  *

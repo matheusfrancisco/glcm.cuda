@@ -72,3 +72,11 @@ void glcm_directions(int *matrix, int *glcm, int n_col, int n_row, int glcm_max,
     }
   }
 }
+
+void norm_cpu(const int *glcm, float *glcm_normalized, int max_value, int sum) {
+  int size = (max_value + 1) * (max_value + 1);
+
+  for (int idx = 0; idx < size; ++idx) {
+    glcm_normalized[idx] = float(glcm[idx]) / float(sum);
+  }
+}

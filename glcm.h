@@ -11,4 +11,5 @@ void glcm_directions(int *matrix, int *glcm, int n_col, int n_row, int glcm_max,
                      int dx, int dy);
 //__global__ void gclm(int *matrix, int *glcm, int n, int c, int max);
 
+void norm_cpu(const int *glcm, float *glcm_normalized, int max_value, int sum);
 #endif // GLCM_H

@@ -30,6 +30,7 @@ add_executable(glcm_cuda
     image.cpp
     glcm.cpp
     glcm_gpu.cu
+    features.cu
     DICOMReader.cpp
     lodepng/lodepng.cpp
 )

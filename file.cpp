@@ -17,7 +17,8 @@ get_images(const std::string folder) {
         fs::path filepath = entry.path();
         std::string extension = filepath.extension().string();
         if (extension == ".png" || extension == ".dcm") {
-          std::cout << filepath << std::endl;
+          // remove only for debug
+          //          std::cout << filepath << std::endl;
           file_map[filepath] = filepath;
         }
       }
@@ -37,10 +38,10 @@ get_images(const std::string folder) {
  * @param number_of_rows
  * @param number_of_columns
  */
-void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
-                        const int number_of_columns) {
+void write_image_matrix(std::string path, float *matrix,
+                        const int number_of_rows, const int number_of_columns) {
   FILE *file = NULL;
-  int *ic = matrix;
+  float *ic = matrix;
   file = fopen(path.c_str(), "w");
   if (file == NULL) {
     std::cout << "Error opening file" << std::endl;
@@ -48,7 +49,7 @@ void write_image_matrix(std::string path, int *matrix, const int number_of_rows,
   }
   for (int i = 0; i < number_of_rows; i++) {
     for (int j = 0; j < number_of_columns; j++) {
-      fprintf(file, "%d  ", ic[j]);
+      fprintf(file, "%f  ", ic[j]);
     }
     fprintf(file, "\n\n");
     ic += number_of_columns;
@@ -97,4 +98,25 @@ void write_map_to_csv_cpu(
 
     csv_file.close();
   }
+}
+
+void write_image_matrix_glcm(std::string path, int *matrix,
+                             const int number_of_rows,
+                             const int number_of_columns) {
+  FILE *file = NULL;
+  int *ic = matrix;
+  file = fopen(path.c_str(), "w");
+  if (file == NULL) {
+    std::cout << "Error opening file" << std::endl;
+    exit(1);
+  }
+  for (int i = 0; i < number_of_rows; i++) {
+    for (int j = 0; j < number_of_columns; j++) {
+      fprintf(file, "%d  ", ic[j]);
+    }
+    fprintf(file, "\n\n");
+    ic += number_of_columns;
+  }
+  fclose(file);
+  return;
 }

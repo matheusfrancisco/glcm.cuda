@@ -1,4 +1,5 @@
 #include "DICOMReader.h"
+#include "features.h"
 #include "file.h"
 #include "glcm_gpu.h"
 #include "image.h"
@@ -30,7 +31,9 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
   int glcm_size = (max * max) * sizeof(int);
 
-  int *d_matrix, *d_glcm;
+  int *d_matrix;
+
+  int *d_glcm;
   // Define CUDA kernel launch parameters
   int threads_per_block = 256;
   int total_pairs = n_row * (n_col - 1);
@@ -46,11 +49,15 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
   std::unordered_map<std::string, double> total_gpu;
   auto start_time_global = std::chrono::high_resolution_clock::now();
 
-  std::vector<int *> h_glcm_cuda_vec(num_directions, nullptr);
+  std::vector<float *> h_glcm_cuda_vec(num_directions, nullptr);
+  // std::vector<int *> h_glcm_cuda_vec(num_directions, nullptr);
 
   for (int dir = 0; dir < num_directions; dir++) {
+
     int dx = dx_array[dir];
     int dy = dy_array[dir];
+    std::cout << "Direction: " << dir << " dx: " << dx << " dy: " << dy
+              << std::endl;
 
     // std::cout << "CudaMalloc: " << dir << std::endl;
     cudaMalloc(&d_glcm, glcm_size);
@@ -66,21 +73,82 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
     // Synchronize to ensure kernel completion
     cudaDeviceSynchronize();
     checkCudaError("cudaDeviceSynchronize");
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end_time - start_time;
-
-    time_map[filename + "_" + std::to_string(dir)] = elapsed.count();
     // Copy GLCM back to host
     int *h_glcm_cuda = (int *)malloc((max * max) * sizeof(int));
 
     cudaMemcpy(h_glcm_cuda, d_glcm, sizeof(int) * (max * max),
                cudaMemcpyDeviceToHost);
-    h_glcm_cuda_vec[dir] = h_glcm_cuda;
 
     checkCudaError("cudaMemcpy to h_glcm_cuda");
 
+    // needs to normalize the glcm matrix
+    int sum = 0;
+    for (int i = 0; i < max * max; i++) {
+      sum += h_glcm_cuda[i];
+    }
+
+    int *d_g_glcm;
+    cudaMalloc((void **)&d_g_glcm, sizeof(int) * n_row * n_col);
+    // Copy matrix to device
+    cudaMemcpy(d_g_glcm, h_glcm_cuda, sizeof(int) * n_row * n_col,
+               cudaMemcpyHostToDevice);
+
+    checkCudaError("move glcm from thos to device");
+
+    float *h_glcm_cuda_normalized;
+    cudaMalloc(&h_glcm_cuda_normalized,
+               ((max + 1) * (max + 1)) * sizeof(float));
+    checkCudaError("malloc glcm for cuda normalized");
+    cudaMemset(h_glcm_cuda_normalized, 0.f,
+               ((max + 1) * (max + 1)) * sizeof(float));
+    checkCudaError("set normalized");
+
+    norm<<<256, 256>>>(d_g_glcm, h_glcm_cuda_normalized, max, sum);
+
+    cudaDeviceSynchronize();
+    float *normalized =
+        (float *)malloc(((max + 1) * (max + 1)) * sizeof(float));
+
+    cudaMemcpy(normalized, h_glcm_cuda_normalized,
+               sizeof(float) * ((max + 1) * (max + 1)), cudaMemcpyDeviceToHost);
+
+    checkCudaError("Copy normalized glcm");
+
+    h_glcm_cuda_vec[dir] = normalized;
+    // extracting features from normalized glcm matrix
+    float *contrast_value;
+    cudaMallocManaged(&contrast_value, sizeof(float) * (max * max));
+    checkCudaError("Initialize contrast");
+    // copy normalized matrix to device again
+
+    float *normalized_glcm;
+    cudaMalloc((void **)&normalized_glcm,
+               ((max + 1) * (max + 1)) * sizeof(float));
+    checkCudaError("malloc normalized");
+
+    // Copy matrix to device
+    cudaMemcpy(normalized_glcm, normalized,
+               sizeof(float) * ((max + 1) * (max + 1)), cudaMemcpyHostToDevice);
+
+    dim3 blockSize(16, 16);
+    dim3 gridSize(max + blockSize.x - 1 / blockSize.x,
+                  (max + blockSize.y - 1) / blockSize.y);
+
+    contrast<<<gridSize, blockSize>>>(normalized_glcm, contrast_value, max);
+
+    cudaDeviceSynchronize();
+    cudaMemcpy(contrast_value, contrast_value, sizeof(float),
+               cudaMemcpyDeviceToHost);
+
+    std::cout << "Contrast: " << contrast_value[0] << std::endl;
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end_time - start_time;
+
+    time_map[filename + "_" + std::to_string(dir)] = elapsed.count();
     std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
 
+    cudaFree(normalized_glcm);
     cudaFree(d_glcm);
   }
 
@@ -91,6 +159,7 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
   if (write_output) {
     for (int dir = 0; dir < num_directions; dir++) {
+      std::cout << "dir: " << dir << std::endl;
       std::string r;
       {
         std::cout << "Writing output: " << filename.c_str() << std::endl;
@@ -112,7 +181,8 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
         r = new_file_name.c_str();
       }
 
-      write_image_matrix(r, h_glcm_cuda_vec[dir], max, max);
+      // write_image_matrix_glcm(r, h_glcm_cuda_vec[dir], max, max);
+      write_image_matrix(r, h_glcm_cuda_vec[dir], max + 1, max + 1);
       free(h_glcm_cuda_vec[dir]);
     }
   }
@@ -126,47 +196,27 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 int main() {
   std::string folder = "/home/chico/m/chico/glcm.cuda/data";
 
+  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
+
   std::unordered_map<fs::path, fs::path, PathHash> file_map =
       get_images(folder);
-
-  for (const auto &file : file_map) {
-    std::string f = file.first.string();
-    std::cout << f.c_str() << std::endl;
-
-    png_image image_png;
-    std::cout << f.c_str() << std::endl;
-
-    // open the image png and put it into an array
-    open_image_value_32b_array(f.c_str(), &image_png);
-
-    size_t m_size = (image_png.width * image_png.height) * sizeof(int);
-    int *matrix = (int *)malloc(m_size);
-    // get the maximum valur of the image
-    int max = 0;
-    for (int i = 0; i < (image_png.height * image_png.width); ++i) {
-      matrix[i] = image_png.image[i];
-      if (matrix[i] > max) {
-        max = matrix[i];
-      }
-    }
-    max += 2;
-    apply_glcm_1(matrix, max, image_png.height, image_png.width,
-                 "../data/csv_result/png_result.csv", f, true);
-    std::cout << "done" << std::endl;
-  }
-
-  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
 
   std::unordered_map<fs::path, fs::path, PathHash> file_map2 =
       get_images(folder_dcm);
 
-  int count = 0;
+  int test_flag = 1;
 
-  for (const auto &file : file_map2) {
+  if (test_flag == 1) {
+
+    // auto file = file_map2.begin();
+
+    string file =
+        "/home/chico/m/chico/glcm.cuda/dataset/ST000001/SE000007/IM0000033.dcm";
     DICOMImage image;
 
-    //std::cout << "Reading DICOM file: " << file.first.string() << std::endl;
-    if (readDICOMImage(file.first.string(), image)) {
+    // std::cout << "Reading DICOM file: " << file.first.string() <<
+    // std::endl;
+    if (readDICOMImage(file, image)) {
       std::cout << "Image Dimensions: " << image.rows << " x " << image.cols
                 << std::endl;
 
@@ -184,18 +234,82 @@ int main() {
           max = image.pixelData[i];
         }
       }
+
       if (max < 10000) {
         std::string r =
-            "../data/csv_result/dcm_result" + std::to_string(count) + ".csv";
-        apply_glcm_1(matrix, max, image.rows, image.cols, r,
-                     file.first.string(), true);
+            "../data/csv_result/dcm_result" + std::to_string(0) + ".csv";
+        apply_glcm_1(matrix, max, image.rows, image.cols, r, file, true);
       }
 
     } else {
       std::cerr << "Failed to read DICOM file." << std::endl;
-      continue;
     }
-    count++;
+  }
+
+  else {
+    for (const auto &file : file_map) {
+      std::string f = file.first.string();
+      std::cout << f.c_str() << std::endl;
+
+      png_image image_png;
+      std::cout << f.c_str() << std::endl;
+
+      // open the image png and put it into an array
+      open_image_value_32b_array(f.c_str(), &image_png);
+
+      size_t m_size = (image_png.width * image_png.height) * sizeof(int);
+      int *matrix = (int *)malloc(m_size);
+      // get the maximum valur of the image
+      int max = 0;
+      for (int i = 0; i < (image_png.height * image_png.width); ++i) {
+        matrix[i] = image_png.image[i];
+        if (matrix[i] > max) {
+          max = matrix[i];
+        }
+      }
+      max += 2;
+      apply_glcm_1(matrix, max, image_png.height, image_png.width,
+                   "../data/csv_result/png_result.csv", f, true);
+      std::cout << "done" << std::endl;
+    }
+
+    int count = 0;
+    for (const auto &file : file_map2) {
+      DICOMImage image;
+
+      // std::cout << "Reading DICOM file: " << file.first.string() <<
+      // std::endl;
+      if (readDICOMImage(file.first.string(), image)) {
+        std::cout << "Image Dimensions: " << image.rows << " x " << image.cols
+                  << std::endl;
+
+        // Example: Accessing pixel data
+        if (!image.pixelData.empty()) {
+          std::cout << "First pixel intensity: " << image.pixelData[0]
+                    << std::endl;
+        }
+
+        int *matrix = (int *)malloc((image.rows * image.cols) * sizeof(int));
+        int max = 0;
+        for (int i = 0; i < image.rows * image.cols; i++) {
+          matrix[i] = image.pixelData[i];
+          if (image.pixelData[i] > max) {
+            max = image.pixelData[i];
+          }
+        }
+        if (max < 10000) {
+          std::string r =
+              "../data/csv_result/dcm_result" + std::to_string(count) + ".csv";
+          apply_glcm_1(matrix, max, image.rows, image.cols, r,
+                       file.first.string(), true);
+        }
+
+      } else {
+        std::cerr << "Failed to read DICOM file." << std::endl;
+        continue;
+      }
+      count++;
+    }
   }
   cudaDeviceSynchronize();
 

@@ -8,6 +8,14 @@ CSV file to be input in a machine learning model/cnn/transformer.
 - [x] glcm in cpu for 8 directions
 - [x] glcm in gpu for 8 directions
 - [x] glcm using openmp for 8 directions
+- [x] implement normalization in gpu and cpu 
+- [ ] implement features in gpu and cpu
+- [ ] implement average in gpu and cpu
+- [ ] implement variance in gpu and cpu
+- [ ] implement contrast in gpu and cpu
+
+- [ ] compare with another libs like skimage, opencv, pycuda etc
+
 - [ ] improve cude memory allocation
 - [ ] improve cuda memory copy
 - [ ] improve cuda memory free
@@ -15,11 +23,6 @@ CSV file to be input in a machine learning model/cnn/transformer.
 - [ ] use shared memory to improve performance
 - [ ] try remove data dependency
 
-- [ ] implement normalization in gpu and cpu 
-- [ ] implement features in gpu and cpu
-- [ ] implement average in gpu and cpu
-- [ ] implement variance in gpu and cpu
-- [ ] implement contrast in gpu and cpu
 
 ## Evaluation
 We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
