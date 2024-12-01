@@ -49,7 +49,7 @@ void write_image_matrix(std::string path, float *matrix,
   }
   for (int i = 0; i < number_of_rows; i++) {
     for (int j = 0; j < number_of_columns; j++) {
-      fprintf(file, "%f  ", ic[j]);
+      fprintf(file, "%.7f  ", ic[j]);
     }
     fprintf(file, "\n\n");
     ic += number_of_columns;

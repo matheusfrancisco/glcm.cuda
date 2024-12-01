@@ -80,3 +80,4 @@ void norm_cpu(const int *glcm, float *glcm_normalized, int max_value, int sum) {
     glcm_normalized[idx] = float(glcm[idx]) / float(sum);
   }
 }
+

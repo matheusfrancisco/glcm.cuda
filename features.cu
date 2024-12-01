@@ -6,9 +6,7 @@ __global__ void contrast(float *normalized, float *contrast, int max) {
   int row = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (normalized[row * max + col] > 0) {
-
     atomicAdd(&contrast[0],
-              (float)((row - col) * (row - col)) * normalized[row * max + col]);
-
+              ((row - col) * (row - col)) * normalized[row * max + col]);
   }
 }

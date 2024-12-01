@@ -19,30 +19,43 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
   std::unordered_map<std::string, double> total_cpu;
 
   auto start_time_global = std::chrono::high_resolution_clock::now();
+
+  std::vector<string> degree(8);
+  degree[0] = "0";
+  degree[1] = "45";
+  degree[2] = "90";
+  degree[3] = "135";
+  degree[4] = "180";
+  degree[5] = "225";
+  degree[6] = "270";
+  degree[7] = "315";
+
+  int count = 0;
   for (const auto &dir : directions) {
     std::cout << "Direction: " << dir.first << " " << dir.second << std::endl;
     auto start_time = std::chrono::high_resolution_clock::now();
 
     int glcm_size = (max * max) * sizeof(int);
     int *r_glcm = (int *)malloc(glcm_size);
-    float *normalized = new float[(max + 1) * (max + 1)];
 
     memset(r_glcm, 0, glcm_size);
-    memset(normalized, 0, (max + 1 * max + 1) * sizeof(float));
 
     glcm_directions(matrix, r_glcm, n_col, n_row, max, dir.first, dir.second);
     int sum = 0;
 
-    for (int i = 0; i < max * max; i++) {
-      sum += r_glcm[i];
+    int enabled_normalization = 0;
+    if (enabled_normalization == 1) {
+      float *normalized = new float[max * max];
+      memset(normalized, 0, (max * max) * sizeof(float));
+      for (int i = 0; i < max * max; i++) {
+        sum += r_glcm[i];
+      }
+      // std::cout << "my sum:" << sum << " ";
+      norm_cpu(r_glcm, normalized, max, sum);
     }
-    std::cout << "my sum:" << sum << " ";
-    norm_cpu(r_glcm, normalized, max, sum);
-
     auto end_time = std::chrono::high_resolution_clock::now();
-
     std::chrono::duration<double> elapsed = end_time - start_time;
-    std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+    // std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
 
     if (write_output) {
       std::string r;
@@ -63,16 +76,16 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
             elapsed.count();
         std::string new_file_name =
             "/home/chico/m/chico/glcm.cuda/data/result_cpu/" + part1 + "-" +
-            part2 + "_" + std::to_string(dir.first) + "_result.txt";
+            part2 + "_" + std::to_string(dir.first) + "_"+ degree[count]+"_result.txt";
         std::cout << "Writing output: " << new_file_name << std::endl;
         r = new_file_name.c_str();
       }
-      write_image_matrix(r, normalized, max+1, max+1);
-      // write_image_matrix_glcm(r, r_glcm, max, max);
+      // write_image_matrix(r, normalized, max , max );
+      write_image_matrix_glcm(r, r_glcm, max, max);
     }
     free(r_glcm);
-    free(normalized);
-    break;
+    //    free(normalized);
+    count += 1;
   }
   free(matrix);
   auto end_time_global = std::chrono::high_resolution_clock::now();
@@ -102,7 +115,8 @@ int main() {
 
   int test_flag = 1;
 
-  if (test_flag == 1) {
+  // this was only for run with one image and test it
+  if (test_flag == 0) {
 
     string file =
         "/home/chico/m/chico/glcm.cuda/dataset/ST000001/SE000007/IM0000033.dcm";
@@ -159,7 +173,7 @@ int main() {
         }
       }
 
-      max += 2;
+      max += 1;
 
       int n_row = image_png.height;
       int n_col = image_png.width;
@@ -191,6 +205,7 @@ int main() {
             max = image.pixelData[i];
           }
         }
+        max += 1;
         if (max < 10000) {
           std::string r = "../data/csv_result_cpu/cpu_result" +
                           std::to_string(count) + ".csv";
