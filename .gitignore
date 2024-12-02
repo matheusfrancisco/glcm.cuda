@@ -5,4 +5,5 @@ data/result_cpu/*
 data/result/*
 data/csv_result_cpu/*
 out/
+benchmark/output/*
 images/*

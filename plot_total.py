@@ -14,10 +14,12 @@ def read_csv(file_path):
             times.append(float(row['time']))
     return functions, times
 
-def plot_execution_times(times_cpu, times_gpu, name):
+def plot_execution_times(times_cpu, times_gpu, python_impl,  name):
     cpu = pd.DataFrame({"fn": ["total_cpu_dcm"], "time": [times_cpu[0]]})
     gpu = pd.DataFrame({"fn": ["total_gpu_dcm"], "time": [times_gpu[0]]})
-    data = pd.concat([cpu, gpu]).reset_index(drop=True)
+    python = pd.DataFrame({"fn": ["python_impl"], "time": [python_impl[0]]})
+    print(python)
+    data = pd.concat([cpu, gpu, python]).reset_index(drop=True)
     plt.figure(figsize=(12, 7))
     plt.bar(data["fn"], data["time"], color=["skyblue", "salmon"])
     plt.xlabel('Process')
@@ -29,4 +31,5 @@ def plot_execution_times(times_cpu, times_gpu, name):
 if __name__ == "__main__":
     functions_cpu, times_cpu = read_csv("./total_cpu.csv")
     functions_gpu, times_gpu = read_csv("./total_gpu.csv")
-    plot_execution_times(times_cpu, times_gpu, "total_time_comparison.png")
+    python_impll, python_impl= read_csv("./benchmark_times.csv")
+    plot_execution_times(times_cpu, times_gpu, python_impl, "total_time_comparison.png")

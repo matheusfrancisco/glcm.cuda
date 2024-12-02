@@ -9,6 +9,7 @@ CSV file to be input in a machine learning model/cnn/transformer.
 - [x] glcm in gpu for 8 directions
 - [x] glcm using openmp for 8 directions
 - [x] implement normalization in gpu and cpu 
+- [x] implement in python and compare with the c++ implementation
 - [ ] implement features in gpu and cpu
 - [ ] implement average in gpu and cpu
 - [ ] implement variance in gpu and cpu
@@ -54,10 +55,18 @@ cmake .. & make
 ./glcm_cpu
 ```
 
+to run the python implementation
+```bash 
+cd benchmark
+&& pip install -r requirements.txt 
+&& python glcm.py
+```
+
 Then you can plot the graph for comparison the CPU approach and the GPU approach
 `python -m venv venv && . ./venv/bin/activate && pip install -r requirements.txt`
 
-```bash python plot_total.py ```
+```bash 
+python plot_total.py ```
 this will save in the disk
 
 ## Cofig
@@ -106,5 +115,5 @@ on fedora ```sudo dnf install dcmtk```
 and on ubuntu ```sudo apt-get install dcmtk```
 
 
-## References papers
+## References papers and code
 
