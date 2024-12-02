@@ -19,6 +19,23 @@ if(NOT DCMTK_FOUND)
     message(FATAL_ERROR "DCMTK not found. Please install DCMTK.")
 endif()
 
+# Find OpenMP package
+find_package(OpenMP REQUIRED)
+
+if(NOT OpenMP_CXX_FOUND)
+    message(FATAL_ERROR "OpenMP not found. Please install OpenMP.")
+endif()
+
+# Suppress all warnings
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Disable all warnings in GCC/Clang
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -fopenmp")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -w -fopenmp")
+elseif(MSVC)
+    # Disable all warnings in MSVC
+    add_compile_options(/W0)
+endif()
+
 # Include directories
 include_directories(${DCMTK_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/lodepng)
@@ -35,8 +52,8 @@ add_executable(glcm_cuda
     lodepng/lodepng.cpp
 )
 
-# Link DCMTK libraries to the executable
-target_link_libraries(glcm_cuda ${DCMTK_LIBRARIES})
+# Link DCMTK libraries and OpenMP to the executable
+target_link_libraries(glcm_cuda ${DCMTK_LIBRARIES} OpenMP::OpenMP_CXX)
 
 # Set target properties
 set_target_properties(glcm_cuda PROPERTIES
@@ -48,9 +65,6 @@ set_target_properties(glcm_cuda PROPERTIES
 
 # Require C++17 features
 target_compile_features(glcm_cuda PUBLIC cxx_std_17)
-
-# Optionally, add CUDA flags
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17")
 
 # Optionally, add a 'run' target to execute the program after building
 add_custom_target(run
@@ -69,8 +83,8 @@ add_executable(glcm_cpu
     lodepng/lodepng.cpp
 )
 
-# Link DCMTK libraries to the CPU executable
-target_link_libraries(glcm_cpu ${DCMTK_LIBRARIES})
+# Link DCMTK libraries and OpenMP to the CPU executable
+target_link_libraries(glcm_cpu ${DCMTK_LIBRARIES} OpenMP::OpenMP_CXX)
 
 # Set target properties for CPU
 set_target_properties(glcm_cpu PROPERTIES
