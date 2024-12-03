@@ -114,6 +114,4 @@ and on ubuntu ```sudo apt-get install dcmtk```
 - [ ] use shared memory to improve performance
 - [ ] try remove data dependency
 
-## References papers and code
-
 
