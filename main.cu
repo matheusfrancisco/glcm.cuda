@@ -318,5 +318,62 @@ int main() {
   write_map_to_csv(total_gpu, "../total_gpu_omp.csv");
   std::cout << "end of dicom cuda+omp images\n" << std::endl;
 
+  //--- remove overhead from open dicom image
+
+  // Vector to store DICOMImage objects
+  std::vector<DICOMImage> dicom_images;
+  for (const auto &file : file_map3) {
+    std::cout << "Reading DICOM file: " << file << std::endl;
+    DICOMImage image;
+
+    if (readDICOMImage(file.string(), image)) {
+      dicom_images.push_back(std::move(image));
+    } else {
+      std::cerr << "Failed to read DICOM file: " << file << std::endl;
+    }
+  }
+
+  std::unordered_map<std::string, double> total_gpu_apply;
+  auto start_time_global_glcm = std::chrono::high_resolution_clock::now();
+
+#pragma omp parallel for
+  for (size_t i = 0; i < dicom_images.size(); ++i) {
+    const auto &image = dicom_images[i];
+
+    int *matrix = (int *)malloc((image.rows * image.cols) * sizeof(int));
+    int max = 0;
+
+    // Populate matrix and find max value
+    for (int j = 0; j < image.rows * image.cols; ++j) {
+      matrix[j] = image.pixelData[j];
+      if (image.pixelData[j] > max) {
+        max = image.pixelData[j];
+      }
+    }
+    max += 1;
+
+    if (max < 10000) {
+      std::string r =
+          "../data/csv_result/dcm_result" + std::to_string(i) + ".csv";
+      apply_glcm_1(matrix, max, image.rows, image.cols, r,
+                   file_map3[i].string(), true);
+    }
+
+    free(matrix);
+    std::cout << "Reading DICOM file: " << i << std::endl;
+  }
+
+  auto end_time_global_glcm = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed_time =
+      end_time_global_glcm - start_time_global_glcm;
+  std::cout << "Total execution time: " << elapsed_time.count() << " seconds"
+            << std::endl;
+
+  total_gpu_apply["total_gpu_algo_dcm"] =
+      std::chrono::duration<double>(end_time_global_glcm -
+                                    start_time_global_glcm)
+          .count();
+  write_map_to_csv(total_gpu_apply, "../total_gpu_omp_cuda_only.csv");
+
   return 0;
 }
