@@ -5,15 +5,179 @@ The idea is to use the GPU to calculate the GLCM matrix and then use the CPU to 
 CSV file to be input in a machine learning model/cnn/transformer.
 
 
-## Evaluation
-We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
-Running for a small set of image we already have the following results:
+### GLCM Algorithm
 
-Result for 275 Dicom images
-![Time GPU vs CPU](./total_time_comparison.png)
+* Counting Pairs: For each pair of pixels, the first pixel has an intensity I, and its neighbor 
+(determined by a displacement vector d) has an intensity J For every such pair in the image, a count is incremented in the [I,J]-th cell of the matrix.
+The displacement vector defines the spatial relationship (e.g., neighbor one pixel to the right, one above, or diagonally).
+
+* Populating the GLCM: Each [I,J]-th entry in the GLCM holds the count of occurrences where a pixel of intensity III is paired with a 
+neighboring pixel of intensity J, based on the defined displacement.
+
+* Symmetry and Counts: The matrix is not necessarily symmetric because the relationship is directional. 
+For instance, counting a pixel III with a rightward neighbor J may not yield the same count as a pixel J with a rightward neighbor 
+I. However, if symmetry is desired (e.g., for certain texture analysis methods), the GLCM can be made symmetric by adding it to its transpose.
+
+To follow the code you can check main.cu for the gpu implementation and main_cpu.cpp for the cpu implementation, to run the code check `#run` section
+
+
+## How the cuda code works for the matrix
+```python
+[0, 1, 0, 0, 2
+ 1, 0, 0, 3, 2
+ 2, 0, 0, 1, 1
+ 3, 1, 1, 3, 2
+ 4, 4, 0, 2, 1]
+```
+* The number of n_row = 5, n_col = 5
+* glcm_max = 5 (assuming gray levels are from 0 to 4)
+* Direction: dx = 1, dy = 0 (0° direction - horizontal neighbors)
+* Blocks = 5, Threads per block = 5, total threads = 25.
+* Global index calculation: idx = blockIdx.x * blockDim.x + threadIdx.x
+
+* With 5 blocks and 5 threads each:
+    - Block 0: idx = 0..4
+    - Block 1: idx = 5..9
+    - Block 2: idx = 10..14
+    - Block 3: idx = 15..19
+    - Block 4: idx = 20..24
+
+Thread-by-Thread Updates:
+- idx=0: (row=0, col=0) neighbor=(0,1)
+    - current=matrix[0]=0, neighbor=matrix[1]=1
+    - glcm(0,1)++
+
+- idx=1: (0,1) neighbor=(0,2)
+    - current=1, neighbor=0
+    - glcm(1,0)++
+
+- idx=2: (0,2) neighbor=(0,3)
+    - current=0, neighbor=0
+    - glcm(0,0)++
+
+- idx=3: (0,3) neighbor=(0,4)
+    - current=0, neighbor=2
+    - glcm(0,2)++
+
+- idx=4: (0,4) neighbor=(0,5 out of bounds) no update
+
+- idx=5: (1,0) neighbor=(1,1)
+    - current=1, neighbor=0
+    - glcm(1,0)++ (again)
+
+- idx=6: (1,1) neighbor=(1,2)
+    - current=0, neighbor=0
+    - glcm(0,0)++ (again)
+
+- idx=7: (1,2) neighbor=(1,3)
+    - current=0, neighbor=3
+    - glcm(0,3)++
+
+- idx=8: (1,3) neighbor=(1,4)
+    - current=3, neighbor=2
+    - glcm(3,2)++
+
+- idx=9: (1,4) neighbor=(1,5 out of bounds) no update
+- idx=10: (2,0) neighbor=(2,1)
+    - current=2, neighbor=0
+    - glcm(2,0)++
+
+- idx=11: (2,1) neighbor=(2,2)
+    - current=0, neighbor=0
+    - glcm(0,0)++ (again)
+
+- idx=12: (2,2) neighbor=(2,3)
+    - current=0, neighbor=1
+    - glcm(0,1)++ (again)
+
+- idx=13: (2,3) neighbor=(2,4)
+    - current=1, neighbor=1
+    - glcm(1,1)++
+
+- idx=14: (2,4) neighbor=(2,5 out of bounds) no update
+- idx=15: (3,0) neighbor=(3,1)
+    - current=3, neighbor=1
+    - glcm(3,1)++
+
+- idx=16: (3,1) neighbor=(3,2)
+    - current=1, neighbor=1
+    - glcm(1,1)++ (again)
+
+- idx=17: (3,2) neighbor=(3,3)
+    - current=1, neighbor=3
+    - glcm(1,3)++
+
+- idx=18: (3,3) neighbor=(3,4)
+    - current=3, neighbor=2
+    - glcm(3,2)++ (again)
+
+- idx=19: (3,4) neighbor=(3,5 out of bounds) no update
+- idx=20: (4,0) neighbor=(4,1)
+    - current=4, neighbor=4
+    - glcm(4,4)++
+
+- idx=21: (4,1) neighbor=(4,2)
+    - current=4, neighbor=0
+    - glcm(4,0)++
+
+- idx=22: (4,2) neighbor=(4,3)
+    - current=0, neighbor=2
+    - glcm(0,2)++ (again)
+
+- idx=23: (4,3) neighbor=(4,4)
+    - current=2, neighbor=1
+    - glcm(2,1)++
+
+- idx=24: (4,4) neighbor=(4,5 out of bounds) no update
+
+
+Let's count how many times each pair incremented:
+glcm(0,0): incremented at idx=2,6,11 → total 3
+glcm(0,1): idx=0,12 → total 2
+glcm(0,2): idx=3,22 → total 2
+glcm(0,3): idx=7 → total 1
+glcm(1,0): idx=1,5 → total 2
+glcm(1,1): idx=13,16 → total 2
+glcm(1,3): idx=17 → total 1
+glcm(2,0): idx=10 → total 1
+glcm(2,1): idx=23 → total 1
+glcm(3,1): idx=15 → total 1
+glcm(3,2): idx=8,18 → total 2
+glcm(4,0): idx=21 → total 1
+glcm(4,4): idx=20 → total 1
+
+```python
+
+   j=0 j=1 j=2 j=3 j=4
+i=0  3   2   2   1   0
+i=1  2   2   0   1   0
+i=2  1   1   0   0   0
+i=3  0   1   2   0   0
+i=4  1   0   0   0   1
+```
 
 
 ## Run
+
+First you need to install some dependencies,  you need to clone the lodepng submodule, `git submodule update --init --recursive` it is used
+to read png images
+
+```bash
+[submodule "lodepng"]
+	path = lodepng
+	url = git@github.com:lvandeve/lodepng.git
+
+```
+
+Then you need to have the `dcmtk ` library installed on your system, used to read dicom images, to install in the Ubutu run `sudo apt-get install dcmtk`
+the system used to develop this code was arch linux which can be installed running `sudo pacman -S dcmtk` or `yay -S dcmtk` for fedora `sudo dnf install dcmtk`
+
+Also you need to have the `cuda` installed on your system, to install it you can follow the instructions on the [nvidia website](https://developer.nvidia.com/cuda-downloads)
+The version used was  Cuda Version: 12.6
+after that you can run build
+
+The images used to evaluate the runtime are in the dataset/ST000001 (dicom images) and inside the data/
+
 ```bash
 mkdir build/
 cd build/
@@ -42,14 +206,21 @@ cd benchmark
 && python glcm.py
 ```
 
+
 Then you can plot the graph for comparison the CPU approach and the GPU approach
 `python -m venv venv && . ./venv/bin/activate && pip install -r requirements.txt`
 
 ```bash 
-python plot_total.py ```
+python plot_total.py
+```
 this will save in the disk
 
-## Cofig
+Inside the `benchmark` folder there are two other implementation of GLCM in python, one using the skimage and the other using the glcm_cuda python 
+implementation, go there to check how to run
+
+
+
+## Env used to develop this code
 
 ### GPU Status Report
 **Date:** Wed Nov 13 17:43:41 2024
@@ -78,21 +249,13 @@ this will save in the disk
 |    0   N/A  N/A      2526      G   ...35,262144 --variations-seed-version        215MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-## Dependencies 
 
-First you need to have the 
-[submodule "lodepng"]
-	path = lodepng
-	url = git@github.com:lvandeve/lodepng.git
+## Evaluation
+We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
+Running for a small set of image we already have the following results:
 
-git submodule update --init --recursive
+![Time GPU vs CPU](./total_time_comparison.png)
 
-Then you need to have the dcmtk library installed on your system,
-
-it needs dcmtk to be installed on 
-arch linux run  ```sudo pacman -S dcmtk``` or ```yay -S dcmtk```
-on fedora ```sudo dnf install dcmtk```
-and on ubuntu ```sudo apt-get install dcmtk```
 
 ### TODO
 - [x] glcm in cpu for 8 directions
@@ -100,6 +263,7 @@ and on ubuntu ```sudo apt-get install dcmtk```
 - [x] glcm using openmp for 8 directions
 - [x] implement normalization in gpu and cpu 
 - [x] implement in python and compare with the c++ implementation
+- [ ] implement the transpose in gpu
 - [ ] implement features in gpu and cpu
 - [ ] implement average in gpu and cpu
 - [ ] implement variance in gpu and cpu
