@@ -157,7 +157,7 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
         r = new_file_name.c_str();
       }
 
-      write_image_matrix_glcm(r, h_glcm_cuda_vec[dir], max, max);
+      //write_image_matrix_glcm(r, h_glcm_cuda_vec[dir], max, max);
       //      int enabled_normalization = 0;
       //      if (enabled_normalization == 1) {
       //        write_image_matrix(r, h_glcm_cuda_vec2[dir], max, max);
@@ -215,7 +215,7 @@ int main() {
     }
     max += 2;
     apply_glcm_1(matrix, max, image_png.height, image_png.width,
-                 "../data/csv_result/png_result.csv", f, true);
+                 "../data/csv_result/png_result.csv", f, false);
     // std::cout << "Reading PNG file: " << i << std::endl;
 
     free(matrix);
@@ -253,7 +253,7 @@ int main() {
     }
     max += 2;
     apply_glcm_1(matrix, max, image_png.height, image_png.width,
-                 "../data/csv_result/png_result.csv", f, true);
+                 "../data/csv_result/png_result.csv", f, false);
     // std::cout << "Reading PNG file: " << i << std::endl;
     free(matrix);
   }
@@ -301,7 +301,7 @@ int main() {
         std::string r =
             "../data/csv_result/dcm_result" + std::to_string(i) + ".csv";
         apply_glcm_1(matrix, max, image.rows, image.cols, r, file.string(),
-                     true);
+                     false);
       }
       free(matrix);
     } else {
@@ -356,7 +356,7 @@ int main() {
       std::string r =
           "../data/csv_result/dcm_result" + std::to_string(i) + ".csv";
       apply_glcm_1(matrix, max, image.rows, image.cols, r,
-                   file_map3[i].string(), true);
+                   file_map3[i].string(), false);
     }
 
     free(matrix);
