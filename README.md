@@ -178,6 +178,23 @@ after that you can run build
 
 The images used to evaluate the runtime are in the dataset/ST000001 (dicom images) and inside the data/
 
+before you need to change
+in the `main_cpu.cpp` the variables to your path to the dataset
+```c++
+  std::string folder = "data";
+  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
+```
+do the same for the `main.cu` file
+```c++
+  std::string folder = "/home/chico/m/chico/glcm.cuda/data/images_png/";
+  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
+```
+
+to clone the images you can get on the [dataset](https://github.com/matheusfrancisco/glcm.cuda/tree/main/dataset/ST000001) 
+and the png images on [data/images_png](https://github.com/matheusfrancisco/glcm.cuda/tree/main/data/images_png)
+
+after changing the path you can run the following commands to build the code
+
 ```bash
 mkdir build/
 cd build/

@@ -87,11 +87,11 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
 int main() {
   std::string folder = "data";
+  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
 
   std::unordered_map<fs::path, fs::path, PathHash> file_map =
       get_images(folder);
 
-  std::string folder_dcm = "/home/chico/m/chico/glcm.cuda/dataset";
 
   std::unordered_map<fs::path, fs::path, PathHash> file_map2 =
       get_images(folder_dcm);
