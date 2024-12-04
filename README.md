@@ -279,16 +279,27 @@ Running for a small set of image we already have the following results:
 
 The importance of have fast glcm algorithms calculation Recente papers
 
-[Another Parallelism Technique of GLCM Implementation Using CUDA Programming](https://www.researchgate.net/publication/347433994_Another_Parallelism_Technique_of_GLCM_Implementation_Using_CUDA_Programming)
-[GLCM based parallel texture segmentation using a multicore processor](https://www.semanticscholar.org/paper/GLCM-based-parallel-texture-segmentation-using-a-Dawwd/ed7000524daa83923b0584ee596d36eda1fda8e0)
-[Image Texture Analysis Feature Extraction Using GLCM](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=e3c9c7d735c1fd8319e34fd3db37973c44802a68#page=291)
-[GLCM-Based Feature Combination for Extraction Model Optimization in Object Detection Using Machine Learning](https://arxiv.org/abs/2404.04578)
-[Brain tumor detection using GLCM features and classifiers](https://pubs.aip.org/aip/acp/article-abstract/2725/1/020010/2880680/Brain-tumor-detection-using-GLCM-features-and?redirectedFrom=fulltext)
-[Effect of Using GLCM and LBP+HOG Feature Extraction on SVM Method in Classification of Human Skin Disease Type](https://ejournal.unitomo.ac.id/index.php/inform/article/view/8275)
-[Grey Level Co-occurrence Matrix (GLCM) Based Second Order Statistics for Image Texture Analysis](https://arxiv.org/abs/2403.04038)
-[The Effects of GLCM parameters on LAI estimation using texture values from Quickbird Satellite Imagery](https://www.nature.com/articles/s41598-017-07951-w)
-[Binary Classification of Remotely Sensed Images Using SVD Based GLCM Features in Quantum Framework](https://ieeexplore.ieee.org/abstract/document/10641968?casa_token=sxU7g8pJyIcAAAAA:cZh0_u03-tFuMB1K19M2rgUMlt8JcBdO9eTzd3AE9zozoRvWje_ohs1enf13yLjJi7-ThzEUR8QM)
 [Tumor classification algorithm via parallel collaborative optimization of single- and multi-objective consistency on PET/CT](https://www.sciencedirect.com/science/article/pii/S1568494624010196?casa_token=UA7Mc0MdJNIAAAAA:-KvON4Pd9mriT9ejiBWw5fUs-jaI3ezgHAAIIb-jlqjXX4-SJu_P7qkhBkCIhVl3RZmEpTZOM6Lo)
+
+
+[GLCM based parallel texture segmentation using a multicore processor](https://www.semanticscholar.org/paper/GLCM-based-parallel-texture-segmentation-using-a-Dawwd/ed7000524daa83923b0584ee596d36eda1fda8e0)
+
+[Image Texture Analysis Feature Extraction Using GLCM](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=e3c9c7d735c1fd8319e34fd3db37973c44802a68#page=291)
+
+[GLCM-Based Feature Combination for Extraction Model Optimization in Object Detection Using Machine Learning](https://arxiv.org/abs/2404.04578)
+
+[Brain tumor detection using GLCM features and classifiers](https://pubs.aip.org/aip/acp/article-abstract/2725/1/020010/2880680/Brain-tumor-detection-using-GLCM-features-and?redirectedFrom=fulltext)
+
+[Effect of Using GLCM and LBP+HOG Feature Extraction on SVM Method in Classification of Human Skin Disease Type](https://ejournal.unitomo.ac.id/index.php/inform/article/view/8275)
+
+[Grey Level Co-occurrence Matrix (GLCM) Based Second Order Statistics for Image Texture Analysis](https://arxiv.org/abs/2403.04038)
+
+[The Effects of GLCM parameters on LAI estimation using texture values from Quickbird Satellite Imagery](https://www.nature.com/articles/s41598-017-07951-w)
+
+[Binary Classification of Remotely Sensed Images Using SVD Based GLCM Features in Quantum Framework](https://ieeexplore.ieee.org/abstract/document/10641968?casa_token=sxU7g8pJyIcAAAAA:cZh0_u03-tFuMB1K19M2rgUMlt8JcBdO9eTzd3AE9zozoRvWje_ohs1enf13yLjJi7-ThzEUR8QM)
+
+[Another Parallelism Technique of GLCM Implementation Using CUDA Programming](https://www.researchgate.net/publication/347433994_Another_Parallelism_Technique_of_GLCM_Implementation_Using_CUDA_Programming)
+
 
 
 ### TODO
