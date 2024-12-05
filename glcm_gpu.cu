@@ -121,3 +121,33 @@ __global__ void transposed(int *transposed, int *glcm, int Max) {
 
   transposed[row * Max + col] = glcm[row * Max + col] + glcm[col * Max + row];
 }
+
+// trying to make it by blocks
+// nxn block and grid
+
+__global__ void glcm_0_degree(int *matrix, int *newMatrix, int nx, int ny, int Max) {
+  int ix = blockIdx.x * blockDim.x + threadIdx.x;
+  int iy = blockIdx.y * blockDim.y + threadIdx.y;
+
+  int Index = iy * nx + ix;
+  int posisi = 0;
+
+  // We iterate over the rows in steps of 2
+  for (int i = 0; i < nx; i += 2) {
+    // Check if this thread's Index corresponds to a pixel in row i of the image
+    // and ensures we don't go out of horizontal bounds for pairs.
+    // Condition: Index in [i*nx, (i+1)*nx - 1]
+    if (Index >= i * nx && Index < ((i + 1) * nx) - 1) {
+
+      // Horizontal pair: (matrix[Index], matrix[Index + 1])
+      posisi = matrix[Index] * Max + matrix[Index + 1];
+      atomicAdd(&newMatrix[posisi], 1);
+
+      // Vertical pair: (matrix[Index + nx], matrix[Index + nx + 1])
+      // This uses the corresponding pixel in the next row and the pixel to the
+      // right of it.
+      posisi = matrix[Index + nx] * Max + matrix[Index + (nx + 1)];
+      atomicAdd(&newMatrix[posisi], 1);
+    }
+  }
+}
