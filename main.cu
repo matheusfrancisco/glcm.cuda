@@ -47,6 +47,7 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
 
   int num_threads = 8;
   omp_set_num_threads(num_threads);
+
 #pragma omp parallel for
   for (int dir = 0; dir < num_directions; dir++) {
 
@@ -157,11 +158,11 @@ void apply_glcm_1(int *matrix, int max, int n_row, int n_col,
         r = new_file_name.c_str();
       }
 
-      //write_image_matrix_glcm(r, h_glcm_cuda_vec[dir], max, max);
-      //      int enabled_normalization = 0;
-      //      if (enabled_normalization == 1) {
-      //        write_image_matrix(r, h_glcm_cuda_vec2[dir], max, max);
-      //      }
+      // write_image_matrix_glcm(r, h_glcm_cuda_vec[dir], max, max);
+      //       int enabled_normalization = 0;
+      //       if (enabled_normalization == 1) {
+      //         write_image_matrix(r, h_glcm_cuda_vec2[dir], max, max);
+      //       }
     }
 
     free(h_glcm_cuda_vec[dir]);
