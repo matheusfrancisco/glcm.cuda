@@ -125,7 +125,7 @@ __global__ void transposed(int *transposed, int *glcm, int Max) {
 // trying to make it by blocks
 // nxn block and grid
 
-__global__ void glcm_0_degree(int *matrix, int *newMatrix, int nx, int ny, int Max) {
+__global__ void glcm_0_degree(int *matrix, int *glcm, int nx, int ny, int Max) {
   int ix = blockIdx.x * blockDim.x + threadIdx.x;
   int iy = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -141,13 +141,13 @@ __global__ void glcm_0_degree(int *matrix, int *newMatrix, int nx, int ny, int M
 
       // Horizontal pair: (matrix[Index], matrix[Index + 1])
       posisi = matrix[Index] * Max + matrix[Index + 1];
-      atomicAdd(&newMatrix[posisi], 1);
+      atomicAdd(&glcm[posisi], 1);
 
       // Vertical pair: (matrix[Index + nx], matrix[Index + nx + 1])
       // This uses the corresponding pixel in the next row and the pixel to the
       // right of it.
       posisi = matrix[Index + nx] * Max + matrix[Index + (nx + 1)];
-      atomicAdd(&newMatrix[posisi], 1);
+      atomicAdd(&glcm[posisi], 1);
     }
   }
 }
