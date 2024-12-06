@@ -271,6 +271,8 @@ implementation, go there to check how to run
 We will run a glcm algorithm in the CPU and in the GPU and compare the results and the time it takes to run the algorithm.
 Running for a small set of image we already have the following results:
 
+![Speed Up](./speedup_comparison.png)
+
 ![Time GPU vs CPU](./total_time_comparison.png)
 
 
